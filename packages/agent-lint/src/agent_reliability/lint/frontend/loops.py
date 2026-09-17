@@ -56,17 +56,38 @@ def _contains_call(body: list[ast.stmt]) -> bool:
     return False
 
 
+def _test_contains_bound_comparison(test: ast.expr) -> bool:
+    # Deliberately narrow: only a comparison that IS the `if` test directly counts, matching the
+    # original (pre-dogfood-session) behavior. A dogfood-review round briefly widened this to "any
+    # comparison anywhere in the test tree" (via ast.walk) to recognize
+    # `if not is_contended(e) or time.time() >= deadline:` -- but a second, independent review
+    # caught that this was too permissive: `if client.is_broken() or SOME_UNRELATED_FLAG == 1:
+    # raise` would then also read as bounded, even though the comparison has nothing to do with
+    # bounding iterations -- a real false-negative regression on a genuinely unbounded loop, not
+    # just a widened true positive. Reverted to this narrow form (kept as its own named function
+    # rather than inlining, so this history stays legible). The compound-condition shape above is
+    # a known, accepted false positive again -- silence (a missed bound) is the safer failure
+    # direction than inventing one, per this module's own stated philosophy, and there is no
+    # reliable syntactic way to tell "this comparison bounds the loop" from "this comparison
+    # merely happens to share a boolean expression with something else."
+    return isinstance(test, ast.Compare) and any(
+        isinstance(op, _BOUND_COMPARISON_OPS) for op in test.ops
+    )
+
+
 def _has_visible_step_bound(body: list[ast.stmt]) -> tuple[bool, str | None]:
     for stmt in body:
         for child in ast.walk(stmt):
             if not isinstance(child, ast.If):
                 continue
-            test = child.test
-            if not isinstance(test, ast.Compare):
+            if not _test_contains_bound_comparison(child.test):
                 continue
-            if not any(isinstance(op, _BOUND_COMPARISON_OPS) for op in test.ops):
-                continue
-            has_exit = any(isinstance(inner, (ast.Break, ast.Return)) for inner in ast.walk(child))
+            # `raise` (mirrors JS `throw`) is a valid loop exit alongside `break`/`return`: it
+            # propagates out of the loop exactly as those do. Same dogfood finding as above --
+            # the confirmed false positive's exit was `throw e`, not `break`/`return`.
+            has_exit = any(
+                isinstance(inner, (ast.Break, ast.Return, ast.Raise)) for inner in ast.walk(child)
+            )
             if has_exit:
                 return True, "counter-check"
     return False, None
