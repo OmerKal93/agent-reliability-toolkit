@@ -39,3 +39,6 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Local HarnessKit state — never land on main
+.harnesskit/

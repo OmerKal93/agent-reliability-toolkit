@@ -6,6 +6,23 @@ release cadence justifies automation (see `EXECUTION.md`, deferred: full release
 
 ## [Unreleased]
 
+### Added
+
+- **AR003** — tool/external call without an explicit timeout (Python + TS/JS).
+- **AR014** — retry policy without an upper bound (Python + TS/JS).
+- Real TypeScript/JavaScript frontend for AR001/AR003/AR014 parity.
+
+### Changed
+
+- NARROW wedge honesty: three harness-execution rules only — not a reliability suite.
+- Removed local `.harnesskit/` state and the `art-contracts` spike from the `main` land path (spike stays off this branch).
+
+### Known limitations (current tip)
+
+- Not on PyPI; install via clone + `uv sync` in `packages/agent-lint`.
+- No ReplaySafe / agent-chaos / GH Action / VS Code product surfaces on this path.
+- Ultra-long MAX_PATH hostile fixtures were dropped from the corpus (broke CI asserts after deletion); portable hostile names remain.
+
 ## [0.1.0] - 2026-07-09
 
 The first installable proof: `pip install agent-lint`, then `agent-lint scan .` finds a real

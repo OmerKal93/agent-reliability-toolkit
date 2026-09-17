@@ -10,15 +10,20 @@ no cloud account, no telemetry, no API key, `network: deny` by default.
 
 ## Status
 
-**Early implementation.** Planning is complete (see below); execution of the first committed
-wave (`EXECUTION.md` E01–E14) is underway. `agent-lint` scans real code locally today (see the
-demo below); nothing is published to PyPI yet. Track progress against the wave in
-`EXECUTION.md`.
+**NARROW wedge (early).** What works today after this tip:
+
+| | |
+|---|---|
+| **Yes** | `agent-lint` CLI: **AR001** (unbounded agent loop), **AR003** (missing timeout), **AR014** (unbounded retry); Python + TS/JS scan |
+| **Install** | Clone + `cd packages/agent-lint && uv sync --dev` — **not** on PyPI yet (`pip install agent-lint` → 404) |
+| **No** | ReplaySafe, agent-chaos suite, GH Action, VS Code, LangGraph/MCP adapters, `art-contracts` as a product |
+
+Planning docs (`PLAN.md`, `PLAN-PRS.md`, E06–E14) describe a larger suite — treat that as architecture backlog, not shipped promises. Track the active wedge here and in `CHANGELOG.md` `[Unreleased]`.
 
 ## Demo
 
 ```console
-$ pip install agent-lint          # not yet published — see Status above; today: uv sync from source
+$ # not on PyPI — from clone: cd packages/agent-lint && uv sync --dev
 $ cat agent.py
 def run_agent(client):
     while True:
